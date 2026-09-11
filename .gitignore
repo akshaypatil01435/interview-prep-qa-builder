@@ -1,0 +1,16 @@
+# Java / Spring Boot
+target/
+*.class
+
+# Node / React
+node_modules/
+dist/
+
+# Environment secrets — NEVER commit these
+.env
+application-local.properties
+
+# OS/IDE junk
+.DS_Store
+.idea/
+*.iml
