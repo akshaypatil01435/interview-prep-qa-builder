@@ -64,8 +64,8 @@ class QuestionEndpointIntegrationTest {
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.pageNumber").value(0))
-                .andExpect(jsonPath("$.pageSize").value(10))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10))
                 .andExpect(jsonPath("$.totalElements").isNumber())
                 .andExpect(jsonPath("$.content[0].questionText").isNotEmpty())
                 .andExpect(jsonPath("$.content[0].topic.name").isNotEmpty());
