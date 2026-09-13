@@ -1,23 +1,25 @@
 package com.interviewprep.backend.controller;
 
-import com.interviewprep.backend.entity.Topic;
-import com.interviewprep.backend.repository.TopicRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import com.interviewprep.backend.dto.topic.TopicResponse;
+import com.interviewprep.backend.service.TopicService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/topics")
 public class TopicController {
-    @Autowired private TopicRepository topicRepository;
 
-    @GetMapping
-    public List<Topic> getAll() {
-        return topicRepository.findAll();
+    private final TopicService topicService;
+
+    public TopicController(TopicService topicService) {
+        this.topicService = topicService;
     }
 
-    @PostMapping
-    public Topic create(@RequestBody Topic topic) {
-        return topicRepository.save(topic);
+    @GetMapping
+    public List<TopicResponse> getAll() {
+        return topicService.getAll();
     }
 }

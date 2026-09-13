@@ -1,34 +1,33 @@
 package com.interviewprep.backend.controller;
 
-import com.interviewprep.backend.entity.Question;
-import com.interviewprep.backend.repository.QuestionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.interviewprep.backend.dto.question.QuestionRequest;
+import com.interviewprep.backend.dto.question.QuestionResponse;
+import com.interviewprep.backend.service.QuestionService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/questions")
 public class AdminQuestionController {
 
-    @Autowired
-    private QuestionRepository questionRepository;
+    private final QuestionService questionService;
+    public AdminQuestionController(QuestionService questionService) { this.questionService = questionService; }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public QuestionResponse create(@Valid @RequestBody QuestionRequest request) { return questionService.create(request); }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        questionRepository.deleteById(id);
-        return "Deleted";
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        questionService.delete(id);
     }
 
     @PutMapping("/{id}")
-    public Question update(
+    public QuestionResponse update(
             @PathVariable Long id,
-            @RequestBody Question updated) {
-
-        updated.setId(id);
-        return questionRepository.save(updated);
+            @Valid @RequestBody QuestionRequest updated) {
+        return questionService.update(id, updated);
     }
 }

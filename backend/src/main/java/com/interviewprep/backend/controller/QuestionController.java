@@ -1,28 +1,43 @@
 package com.interviewprep.backend.controller;
 
-import com.interviewprep.backend.entity.Question;
-import com.interviewprep.backend.repository.QuestionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.interviewprep.backend.dto.common.PageResponse;
+import com.interviewprep.backend.dto.question.QuestionResponse;
+import com.interviewprep.backend.entity.Difficulty;
+import com.interviewprep.backend.service.QuestionService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/questions")
 public class QuestionController {
-    @Autowired private QuestionRepository questionRepository;
+
+    private final QuestionService questionService;
+    public QuestionController(QuestionService questionService) { this.questionService = questionService; }
 
     @GetMapping
-    public List<Question> getAll() {
-        return questionRepository.findAll();
+    public PageResponse<QuestionResponse> getAll(Authentication authentication, @RequestParam(required = false) String query, @RequestParam(required = false) Long topicId, @RequestParam(required = false) Difficulty difficulty, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "12") int size, @RequestParam(defaultValue = "createdAt") String sort) {
+        return questionService.search(authentication.getName(), query, topicId, difficulty, page, size, sort);
     }
 
-    @GetMapping("/topic/{topicId}")
-    public List<Question> getByTopic(@PathVariable Long topicId) {
-        return questionRepository.findByTopicId(topicId);
+    @GetMapping("/{id}")
+    public QuestionResponse getById(@PathVariable Long id, Authentication authentication) {
+        return questionService.get(id, authentication.getName());
     }
 
-    @PostMapping
-    public Question create(@RequestBody Question question) {
-        return questionRepository.save(question);
+    @PutMapping("/{id}/solved")
+    public QuestionResponse markSolved(@PathVariable Long id, Authentication authentication) {
+        return questionService.setSolved(id, authentication.getName(), true);
     }
+
+    @DeleteMapping("/{id}/solved")
+    public QuestionResponse markUnsolved(@PathVariable Long id, Authentication authentication) {
+        return questionService.setSolved(id, authentication.getName(), false);
+    }
+
+    @PutMapping("/{id}/bookmark")
+    public QuestionResponse bookmark(@PathVariable Long id, Authentication authentication) { return questionService.setBookmark(id, authentication.getName(), true); }
+
+    @DeleteMapping("/{id}/bookmark")
+    public QuestionResponse unbookmark(@PathVariable Long id, Authentication authentication) { return questionService.setBookmark(id, authentication.getName(), false); }
 }

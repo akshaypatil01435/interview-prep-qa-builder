@@ -1,0 +1,6 @@
+package com.interviewprep.backend.dto.topic;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record TopicRequest(@NotBlank @Size(max = 80) String name, @Size(max = 500) String description) {}
