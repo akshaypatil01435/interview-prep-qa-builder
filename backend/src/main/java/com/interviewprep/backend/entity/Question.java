@@ -26,6 +26,21 @@ public class Question {
     @JoinColumn(name = "topic_id", nullable = false)
     private Topic topic;
 
+    // MCQ support
+    @Enumerated(EnumType.STRING)
+    private QuestionType questionType = QuestionType.TEXT;
+
+    private String optionA;
+    private String optionB;
+    private String optionC;
+    private String optionD;
+
+    @Enumerated(EnumType.STRING)
+    private McqOption correctOption;
+
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -41,5 +56,14 @@ public class Question {
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public enum QuestionType {
+        TEXT,
+        MCQ
+    }
+
+    public enum McqOption {
+        A, B, C, D
     }
 }
