@@ -6,7 +6,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,16 +13,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
-    @Autowired
-    private UserRepository userRepository;
+    public JwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            UserRepository userRepository,
+            RestAuthenticationEntryPoint authenticationEntryPoint) {
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+    }
 
     @Override
     protected void doFilterInternal(
@@ -34,40 +40,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null) {
             filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
+            authenticationEntryPoint.commence(request, response, null);
             return;
         }
 
         String token = authHeader.substring(7);
 
         try {
-            if (jwtUtil.isTokenValid(token)) {
+            String email = jwtUtil.extractEmail(token);
+            User user = userRepository.findByEmail(email).orElse(null);
 
-                String email = jwtUtil.extractEmail(token);
-
-                User user = userRepository.findByEmail(email)
-                        .orElse(null);
-
-                if (user != null) {
-
-                    SimpleGrantedAuthority authority =
-                            new SimpleGrantedAuthority(user.getRole().name());
-
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user.getEmail(),
-                                    null,
-                                    Collections.singletonList(authority)
-                            );
-
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
-                }
+            if (user == null || user.getRole() == null) {
+                authenticationEntryPoint.commence(request, response, null);
+                return;
             }
 
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user.getEmail(), null, List.of(authority));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {
-            System.out.println("JWT Authentication failed: " + e.getMessage());
+            SecurityContextHolder.clearContext();
+            authenticationEntryPoint.commence(request, response, null);
+            return;
         }
 
         filterChain.doFilter(request, response);
